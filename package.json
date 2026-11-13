@@ -1,12 +1,13 @@
 {
-  "name": "web",
+  "name": "cerna-franchising-resources",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "next": "16.4.3",
@@ -14,12 +15,14 @@
     "react-dom": "19.3.0"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.4.3",
+    "postcss": "^8.5.32",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
