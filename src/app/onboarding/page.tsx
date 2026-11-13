@@ -48,6 +48,7 @@ type PersistedValues = Omit<FormValues, "businessLicense" | "insuranceCertificat
 type Status = "idle" | "saving" | "saved" | "submitting" | "submitted" | "error";
 
 const STORAGE_KEY_PREFIX = "cerna-franchise-onboarding-draft-v2";
+const FORM_VERSION = "2026-11-12-format-fix-1";
 const STEPS = [
     { title: "Franchise Information", subtitle: "Business identity, contact details and address" },
     { title: "Owner & Contacts", subtitle: "Owners and additional contacts" },
@@ -115,7 +116,11 @@ function parseCoverageInput(input: string): CoverageGroup[] {
             )) {
                 return parsed as CoverageGroup[];
             }
-        } catch { /* User-friendly input also starts with '['. */ }
+        } catch { /* The simple [County] format also begins with '['. */ }
+        // A pasted JSON object array should not silently turn into malformed county text.
+        if (text.startsWith("[{")) {
+            throw new Error("Coverage JSON is invalid. Use [County] City 1; City 2 instead.");
+        }
     }
 
     return text.split(/\r?\n/).filter((line) => line.trim()).map((line, index) => {
@@ -163,7 +168,11 @@ function formatZip(value: string): string {
 }
 
 function formatPhone(value: string): string {
-    const digits = digitsOnly(value).slice(0, 10);
+    // Normalize typing, pasted punctuation, and optional +1 US country code.
+    let digits = digitsOnly(value);
+    if (digits.length === 11 && digits.startsWith("1")) digits = digits.slice(1);
+    digits = digits.slice(0, 10);
+
     if (!digits) return "";
     if (digits.length < 3) return `(${digits}`;
     if (digits.length === 3) return `(${digits})`;
@@ -193,10 +202,19 @@ function Field({ label, name, value, onChange, required = false, type = "text", 
                 type={name === "zip" ? "text" : type}
                 inputMode={name === "zip" || phoneFields.has(name) ? "numeric" : undefined}
                 autoComplete={name === "zip" ? "postal-code" : phoneFields.has(name) ? "tel" : undefined}
-                maxLength={name === "zip" ? 5 : phoneFields.has(name) ? 14 : undefined}
+                maxLength={name === "zip" ? 5 : phoneFields.has(name) ? 18 : undefined}
                 value={value}
                 placeholder={placeholder ?? (phoneFields.has(name) ? "(999) 999-9999" : name === "zip" ? "99999" : undefined)}
-                onChange={(e) => onChange(name, e.target.value)}
+                onChange={(e) => {
+                    const rawValue = e.currentTarget.value;
+
+                    if (name === "zip") {
+                        onChange(name, rawValue.replace(/\D/g, "").slice(0, 5));
+                        return;
+                    }
+
+                    onChange(name, rawValue);
+                }}
                 className={`${inputClass} ${error ? "border-red-500" : ""}`}
                 aria-invalid={Boolean(error)}
             />
@@ -338,8 +356,7 @@ export default function OnboardingWizard() {
                     operationsEmail: getOnboarding("operationsEmail"),
                     billingContact: getOnboarding("billingContact"),
                     billingEmail: getOnboarding("billingEmail"),
-                    emergencyContact: getOnboarding("emergencyContact"),
-                    emergencyPhone: getOnboarding("emergencyPhone"),
+                    emergencyContact: getOnboarding("emergencyContact"), 
                     operatingHours: getOnboarding("operatingHours"),
                     servicesOffered: getOnboarding("servicesOffered"),
                     staffingPlan: getOnboarding("staffingPlan"),
@@ -351,7 +368,7 @@ export default function OnboardingWizard() {
                     zip: formatZip(String(localDraft.zip ?? locationFields.zip ?? "")),
                     mainPhone: formatPhone(String(localDraft.mainPhone ?? locationFields.mainPhone ?? "")),
                     tollFreePhone: formatPhone(String(localDraft.tollFreePhone ?? locationFields.tollFreePhone ?? "")),
-                    ownerPhone: formatPhone(String(localDraft.ownerPhone ?? (getOnboarding("contactPhone") || getLocation("phone")) ?? "")),
+                    ownerPhone: formatPhone(String(localDraft.ownerPhone ?? (getOnboarding("contactPhone") || getLocation("phone")))),
                     emergencyPhone: formatPhone(String(localDraft.emergencyPhone ?? getOnboarding("emergencyPhone") ?? "")),
                 });
             } catch (error) {
@@ -389,7 +406,11 @@ export default function OnboardingWizard() {
         setMessage("");
         setStatus("idle");
     };
-    const changeText = (name: string, value: string) => update(name, formatInput(name, value));
+    // Apply formatting to *every* text change before updating controlled form state.
+    // This handles manual typing as well as pasted values.
+    const changeText = (name: string, value: string) => {
+        update(name, formatInput(name, value));
+    };
 
     const validateStep = (index: number) => {
         const next: Record<string, string> = {};
@@ -444,12 +465,18 @@ export default function OnboardingWizard() {
             if (!values.certifyAccuracy) next.certifyAccuracy = "Please confirm your information is accurate.";
             if (!values.acknowledgePolicies) next.acknowledgePolicies = "Please acknowledge the onboarding policies.";
         }
-        setErrors(next);
-        return Object.keys(next).length === 0;
+        if (Object.keys(next).length > 0) {
+            setErrors(next);
+            return false;
+        }
+        return true;
     };
 
     const nextStep = () => {
-        if (!validateStep(step)) { setMessage("Please correct the highlighted fields before continuing."); return; }
+        if (!validateStep(step)) {
+            setMessage(`Please correct the highlighted fields in Step ${step + 1}: ${STEPS[step].title}.`);
+            return;
+        }
         setMessage(""); setStep((current) => Math.min(current + 1, STEPS.length - 1));
         window.scrollTo({ top: 0, behavior: "smooth" });
     };
@@ -751,6 +778,7 @@ export default function OnboardingWizard() {
                         Your information will be submitted to Cerna HQ for review.
                         Location changes will not become active until approved.
                     </p>
+                    <p className="mt-1 text-xs text-slate-400">Form version: {FORM_VERSION}</p>
                 </header>
                 <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                     <div className="border-b border-slate-200 bg-slate-900 px-5 py-6 text-white sm:px-8">
