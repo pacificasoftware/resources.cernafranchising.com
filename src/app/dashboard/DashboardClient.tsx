@@ -691,73 +691,117 @@ export default function DashboardClient() {
                     {/* RESOURCE LIBRARY */}
                     {/* =================================== */}
 
-                    {section === "Resources" && (
-                        <>
-                            <div>
-                                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#B28B4E]">
-                                    Knowledge Base
-                                </p>
+                 
+{section === "Resources" && (
+    <>
+        <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#B28B4E]">
+                Knowledge Base
+            </p>
 
-                                <h2 className="mt-2 text-2xl font-bold">
-                                    Resource Library
-                                </h2>
+            <h2 className="mt-2 text-2xl font-bold">
+                Resource Library
+            </h2>
 
-                                <p className="mt-2 text-sm text-slate-500">
-                                    Find operational manuals, company policies,
-                                    guides and other important documents.
-                                </p>
-                            </div>
+            <p className="mt-2 text-sm text-slate-500">
+                Select a category to access franchise resources,
+                manuals, templates and important documents.
+            </p>
+        </div>
 
-                            <input
-                                type="search"
-                                value={search}
-                                onChange={(e) =>
-                                    setSearch(e.target.value)
-                                }
-                                placeholder="Search manuals, policies, guides..."
-                                className="w-full rounded-xl border border-slate-200 bg-white px-5 py-3 outline-none transition focus:border-[#B28B4E]"
-                            />
+        <div className="grid gap-5 md:grid-cols-2">
+            {[
+                {
+                    title: "Operations",
+                    description:
+                        "Franchise manuals, licensing, technology and operational procedures.",
+                    icon: "⚙",
+                    href: "/resources/operations",
+                },
+                {
+                    title: "Sales & Marketing",
+                    description:
+                        "Sales templates, branding, marketing materials and outreach resources.",
+                    icon: "◈",
+                    href: "/resources/sales-marketing",
+                },
+                {
+                    title: "HR / Recruiting",
+                    description:
+                        "Recruiting guides, employee onboarding, HR policies and templates.",
+                    icon: "♙",
+                    href: "/resources/hr-recruiting",
+                },
+                {
+                    title: "Clinical / Compliance",
+                    description:
+                        "Clinical procedures, compliance guidance and educational resources.",
+                    icon: "✚",
+                    href: "/resources/clinical-compliance",
+                },
+            ].map((resource) => (
+                <button
+                    key={resource.title}
+                    type="button"
+                    onClick={() => router.push(resource.href)}
+                    className="
+                        group relative flex min-h-[190px]
+                        w-full flex-col items-start
+                        overflow-hidden rounded-2xl
+                        border border-slate-200
+                        bg-white p-7 text-left
+                        shadow-sm
+                        transition-all duration-300 ease-out
+                        hover:-translate-y-1
+                        hover:border-[#B28B4E]
+                        hover:bg-[#FFFDF8]
+                        hover:shadow-xl
+                        focus-visible:outline-2
+                        focus-visible:outline-offset-2
+                        focus-visible:outline-[#B28B4E]
+                    "
+                >
+                    <div className="mb-5 flex w-full items-center justify-between">
+                        <div
+                            className="
+                                flex h-12 w-12
+                                items-center justify-center
+                                rounded-xl bg-[#F4EEE3]
+                                text-2xl text-[#B28B4E]
+                                transition-all duration-300
+                                group-hover:scale-110
+                                group-hover:bg-[#B28B4E]
+                                group-hover:text-white
+                            "
+                        >
+                            {resource.icon}
+                        </div>
 
-                            <div className="grid gap-4 md:grid-cols-2">
-                                {filteredResources.map((resource) => (
-                                    <div
-                                        key={resource.title}
-                                        className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
-                                    >
-                                        <span className="text-xs font-semibold uppercase tracking-wide text-[#B28B4E]">
-                                            {resource.category}
-                                        </span>
+                        <span
+                            className="
+                                text-xl text-slate-300
+                                transition-all duration-300
+                                group-hover:translate-x-1
+                                group-hover:text-[#B28B4E]
+                            "
+                        >
+                            →
+                        </span>
+                    </div>
 
-                                        <h3 className="mt-3 font-semibold">
-                                            {resource.title}
-                                        </h3>
+                    <h3 className="text-lg font-bold text-[#112E46]">
+                        {resource.title}
+                    </h3>
 
-                                        <p className="mt-2 text-sm text-slate-500">
-                                            {resource.description}
-                                        </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                        {resource.description}
+                    </p>
+                </button>
+            ))}
+        </div>
+    </>
+)}
 
-                                        <div className="mt-5 flex items-center justify-between">
-                                            <span className="text-xs text-slate-400">
-                                                {resource.type}
-                                            </span>
-
-                                            <span className="text-xs text-slate-400">
-                                                Coming Soon
-                                            </span>
-                                        </div>
-                                    </div>
-                                ))}
-
-                                {filteredResources.length === 0 && (
-                                    <div className="col-span-full rounded-xl border border-slate-200 bg-white p-8 text-center">
-                                        <p className="text-sm text-slate-500">
-                                            No resources match your search.
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
-                        </>
-                    )}
 
                     {/* =================================== */}
                     {/* SUPPORT TICKETS */}
